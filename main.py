@@ -12,36 +12,9 @@ height, width = 45, 60
 map_height = 30
 map_width = 30#np.floor(map_height * np.pi * 0.5)
 
-tiles = [
-    "  ",#"  ",
-    "██",
-    "▓▓",
-    "  ",
-    "▒▒"
-]
-
 chars = [
     "❂"
 ]
-
-'''
-def generate_row(width, x):
-    row = ""
-    for y in range(width):
-        #x = x / width_scale_factor
-        y = -(y - width // 2) / (width_scale_factor - 0.25)
-        block = tiles[1]
-        if (x**2 + y**2) < radius**2:
-            block = tiles[0]
-        elif (x**2 + y**2) < (radius + 0.85)**2:
-            block = tiles[2]
-        else:
-            block = tiles[1]
-        row += (block)
-    return row
-
-grid = np.array([generate_row(int(grid_size * width_scale_factor), -(x - grid_size // 2)) for x in range(grid_size)])
-'''
 
 
 
