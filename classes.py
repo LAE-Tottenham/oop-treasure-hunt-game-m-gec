@@ -1,13 +1,6 @@
 import numpy as np
-from noise import pnoise2 #noise must be installed via pip3
+from noise import pnoise2
 
-'''
-screen = np.zeros((5, 5))
-array = np.array([[23, 46, 85],
-    [43, 56, 99],
-    [11, 34, 55]])
-screen[:3, :3] = array
-print(screen)'''
 
 
 #map region calculation functions ---------------------------------------------------------------------------------------------------------------
@@ -19,39 +12,8 @@ def noise(x, y, map):
     #print((result))
     return 1 - min(round(result * 10), 1)
 
-
-def within_castle(x, y, y_sf, a, b, r, depth): # (x-a)**2 + ((y-b) * y_sf)**2 <= r**2        checks for main body, then each tower
-    
-    if depth == 0:#only apply on the first iteration of the function
-        #get x and y relative to the centre (int of y for unique curvature)
-        x, y = x - a, int((y-b) * y_sf)
-    depth += 1
-
-     #do not go any deeper for the towers
-    if depth == 2: return ((x)**2 + (y)**2 <= r**2) #tower shape calculation
-
-    #lies_within_main_body = False#((x)**2 + (y)**2 <= r**2) #main body shape calculation
-    path_thickness = 4.5
-    gradient = 0.8
-
-    #check for inner body & 4 connecting paths clamped at map edges
-    #((x)**2 + (y)**2 <= (r / 1.5)**2) or ---- former circle
-
-    path_one = ((-gradient * x + path_thickness >= y and -gradient * x - path_thickness <= y) and x > -20 and x < 20 and y > -20 and y < 20)
-    path_two = ((gradient * x + path_thickness >= y and gradient * x - path_thickness <= y) and x > -20 and x < 20 and y > -20 and y < 20)
-    lies_within_main_body = path_one or path_two
-    if lies_within_main_body: return True
-
-    #adjust variables for the smaller towers
-    dist_sf = 2
-    radial_sf = 2.4
-    r /= radial_sf
-
-    within_north_towers = within_castle(x - (dist_sf * r), y + (dist_sf * (r / y_sf)), y_sf, a, b, r, depth) or within_castle(x + (dist_sf * r), y + (dist_sf * (r / y_sf)), y_sf, a, b, r, depth)
-    within_south_towers = within_castle(x - (dist_sf * r), y - (dist_sf * (r / y_sf)), y_sf, a, b, r, depth) or within_castle(x + (dist_sf * r), y - (dist_sf * (r / y_sf)), y_sf, a, b, r, depth)
-
-    return within_north_towers or within_south_towers
-
+def convert_to_floor_tile(x, y, array):
+    array[x][y] = (x - 1) % 2 == 0 and (y % 2 == 0 and 4 or 6) or (y % 2 == 0 and 6 or 4)
 
 #variables -------------------------------------------------------------------------------------------------------------------------------------
 
@@ -59,23 +21,26 @@ tiles = [
     "  ",
     "██",
     "▓▓",
-    "⏏ ",#ℹ۩۞
+    "〓",#ℹ۩۞⏏〇〓
     "▒▒",
     "  ",
     "░░",
     "",
-    "⌺ ",
+    "⚿ ",
     "♝ ",
     "♜ ",
     "♞ ",
     "✠ ",
     "✤ ",
     "✦ ",
+    "♚ ",
+    "♛ ",
     "ጨጭጮ",
-    "౷"
+    "౷",
+    "⚠ ",
+    "⚑ ",
+    "⚐ "
 ]
-
-
 
 
 #classes ---------------------------------------------------------------------------------------------------------------------------------------
@@ -150,7 +115,7 @@ class Map:
                             tile_color = 1 #black tile
                         
                         #-----------------------------------------------------------------------------
-                    case 3:
+                    case 3: #3 4 3 circle arrangement
                         #-----------------------------------------------------------------------------
                         pass
                         #-----------------------------------------------------------------------------
@@ -160,12 +125,45 @@ class Map:
     
 
 class Player:
-    def __init__(self):
+    def __init__(self, passed_inventory):
         self.position = (22, 30) #initial player position
-        self.inventory = Inventory()
+        self.inventory = passed_inventory
     
     def move(self, direction, map):
-        pass
+        x, y = self.position #player position
+        d_x, d_y = direction #direction x and y
+
+        unit_destination = (x + d_x, y + d_y)
+        destination_material = map.array[unit_destination[0]][unit_destination[1]]
+        if destination_material in [4, 6]: #destination is not rock, take a single step
+            self.position = unit_destination
+            convert_to_floor_tile(x, y, map.array)
+        elif destination_material == 1:#drill into rock until anything but tiles[1] is reached
+            scale_factor = 2
+            while True:
+                destination = (x + (d_x * scale_factor), y + (d_y * scale_factor))
+                destination_material = map.array[destination[0]][destination[1]]
+                if destination_material in [4, 6]: #end of rock has been reached
+                    self.position = destination
+                    #convert the final rock cell into a floor cell
+                    tunnel_x, tunnel_y = (x + (d_x * (scale_factor - 1)), y + (d_y * (scale_factor - 1)))
+                    convert_to_floor_tile(tunnel_x, tunnel_y, map.array)
+                    break
+                elif destination_material != 1: #non rock entity reached, stop one block before it
+                    destination_x, destination_y = (x + (d_x * (scale_factor - 1)), y + (d_y * (scale_factor - 1)))
+                    self.position = (destination_x, destination_y)
+                    convert_to_floor_tile(destination_x, destination_y, map.array)
+                    break
+                else:
+                    #print("rock!", x, y)
+                    #still drilling through rock, replace rock with ground
+                    tunnel_x, tunnel_y = (x + (d_x * (scale_factor - 1)), y + (d_y * (scale_factor - 1)))
+                    convert_to_floor_tile(tunnel_x, tunnel_y, map.array)
+                
+                scale_factor += 1
+            
+        else: #map border, do not drill
+            pass
         #either move until an obstruction is reached, or move a set unit
 
 

@@ -3,14 +3,12 @@ import numpy as np
 from random import randint as random
 import os
 import time
-import shutil
-import sys
+import shutil #for terminal size check
 
 
 #inital terminal sizing configuration -----------------------------------------------------------------------------------------------------------------------------------
 
 accepted_columns, accepted_lines = 160, 35
-
 def validate_terminal_dimensions(accepted_columns, accepted_lines):
     columns, lines = shutil.get_terminal_size()
     if (columns < accepted_columns) or (lines < accepted_lines):
@@ -26,12 +24,8 @@ while True:
     os.system('clear')
     if validate_terminal_dimensions(accepted_columns, accepted_lines): break
 
-#sys.exit()
 
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-#[settings]:
+#settings -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #height and width of the screen
 height, width = 45, 80
@@ -40,13 +34,12 @@ height, width = 45, 80
 map_height = 45
 map_width = 60
 
-chars = [
-    "❂"
-]
+fps = 5
 
 #instance configuration ------------------------------------------------------------------------------------------------------------------------------------------------
-
-player = Player()
+inventory = Inventory()
+player = Player(inventory)
+map_one = Map(map_height, map_width, 1)
 
 #main loop -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -60,14 +53,14 @@ while True:
     #generate instances -------------------------------------------------------------------------
 
     screen = Screen(height, width)
-    map = Map(map_height, map_width, 1)
+    map = map_one
 
     #display elements ---------------------------------------------------------------------------
 
     screen.add_elements_to_screen([map, player, 1, 1, 1, 1])#error origin
     screen.display()
 
-    break
+    #break
 
     #keybinds -----------------------------------------------------------------------------------
 
@@ -76,13 +69,13 @@ while True:
         #movement keybinds-----------------------------
         #top left is (0, 0)
         case "w":
-            player.move(np.array([0, -1]), map)
-        case "a":
             player.move(np.array([-1, 0]), map)
+        case "a":
+            player.move(np.array([0, -1]), map)
         case "s":
-            player.move(np.array([0, 1]), map)
-        case "d":
             player.move(np.array([1, 0]), map)
+        case "d":
+            player.move(np.array([0, 1]), map)
 
         #action keybinds-------------------------------
         
@@ -101,28 +94,12 @@ while True:
             break
 
     #wait the refresh period
-    fps = 5
     time.sleep(fps**-1)
 
 
 
 
 
-
-
-
-'''
-current screen gets displayed
-player 
-'''
-
-'''
-player drills through walls
-player can only drill in a straight line but move freely in open air
-if their path intersects with an enemy npc, they lose a life and the level resets
-if it insersects with a merchant, they can purchase or sell goods, then must drill perpendicularly to continue (npcs cannot be drilled)
-they must reach the exit and touch it, sometimes requiring a key
-'''
 
 
 
